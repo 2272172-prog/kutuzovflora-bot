@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(200).send("ok");
 
   const token = process.env.BOT_TOKEN;
-  const adminChatId = process.env.ADMIN_CHAT_ID;
+  const adminChatId = process.env.ADMIN_CHAT_ID; // 41830773
   if (!token) return res.status(500).send("BOT_TOKEN missing");
   if (!adminChatId) return res.status(500).send("ADMIN_CHAT_ID missing");
 
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const text = update?.message?.text || "";
   const wad = update?.message?.web_app_data?.data;
 
-  // Узнать chat_id
+  // Узнать свой chat_id
   if (text === "/id" && chatId) {
     await sendMessage(token, chatId, "Ваш chat_id: " + chatId);
     return res.status(200).json({ ok: true });
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     if (data?.type === "order") {
       const name = data.name || "Букет";
-      const price = data.price ? `${data.price} ₽` : "-";
+      const price = (data.price || data.price === 0) ? `${data.price} ₽` : "-";
       const desc = (data.desc || "").trim();
       const img = data.img || "";
       const link = data.link || "";
@@ -39,10 +39,10 @@ export default async function handler(req, res) {
         (link ? "\nСсылка: " + link + "\n" : "") +
         "\nКлиент chat_id: " + (chatId ? chatId : "неизвестно");
 
-      // Тебе (админу)
+      // 1) Сообщение админу (тебе)
       await sendMessage(token, adminChatId, adminText, link);
 
-      // Клиенту подтверждение
+      // 2) Подтверждение клиенту
       if (chatId) {
         const clientText =
           "✅ Заказ принят! Мы скоро свяжемся с вами.\n\n" +
@@ -62,6 +62,7 @@ async function sendMessage(token, chatId, text, link) {
     disable_web_page_preview: false,
   };
 
+  // Кнопка "Открыть букет"
   if (link) {
     payload.reply_markup = {
       inline_keyboard: [[{ text: "🌸 Открыть букет", url: link }]],
