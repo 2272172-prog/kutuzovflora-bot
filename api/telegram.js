@@ -18,18 +18,19 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
-  // ✅ Заказ через deep link: /start order_<PRODUCT_ID>
-  // Пример: /start order_abc123
+  // /start payload
   if (text.startsWith("/start")) {
     const parts = text.split(" ");
     const payload = (parts[1] || "").trim();
 
+    // ✅ заказ
     if (payload.startsWith("order_")) {
       const productId = payload.slice("order_".length);
-      const link = "https://flower-app-ten.vercel.app/?p=" + encodeURIComponent(productId);
+      const link =
+        "https://flower-app-ten.vercel.app/?p=" + encodeURIComponent(productId);
 
       const adminText =
-        "🛒 НОВЫЙ ЗАКАЗ (deep link)\n\n" +
+        "🛒 НОВЫЙ ЗАКАЗ\n\n" +
         "Товар ID: " + productId + "\n" +
         "Ссылка: " + link + "\n" +
         "Клиент chat_id: " + (chatId ? chatId : "неизвестно");
@@ -47,14 +48,13 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // обычный /start без payload
+    // обычный /start
     if (chatId) {
       await sendMessage(token, chatId, "Привет! Открой витрину через кнопку меню 🙂");
     }
     return res.status(200).json({ ok: true });
   }
 
-  // если пришло что-то другое — просто OK
   return res.status(200).json({ ok: true });
 };
 
