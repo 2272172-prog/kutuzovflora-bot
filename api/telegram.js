@@ -10,8 +10,7 @@ module.exports = async function handler(req, res) {
   const update = req.body || {};
   const msg = update.message || {};
   const chatId = msg?.chat?.id;
-  const text = msg?.text || "";
-  const wad = msg?.web_app_data?.data;
+  const text = (msg?.text || "").trim();
 
   // /id — узнать chat_id
   if (text === "/id" && chatId) {
@@ -19,38 +18,43 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
-  // Заказ из WebApp
-  if (wad) {
-    let data = null;
-    try { data = JSON.parse(wad); } catch (e) {}
+  // ✅ Заказ через deep link: /start order_<PRODUCT_ID>
+  // Пример: /start order_abc123
+  if (text.startsWith("/start")) {
+    const parts = text.split(" ");
+    const payload = (parts[1] || "").trim();
 
-    if (data && data.type === "order") {
-      const name = data.name || "Букет";
-      const price = (data.price || data.price === 0) ? (String(data.price) + " ₽") : "-";
-      const desc = (data.desc || "").trim();
-      const img = data.img || "";
-      const link = data.link || "";
+    if (payload.startsWith("order_")) {
+      const productId = payload.slice("order_".length);
+      const link = "https://flower-app-ten.vercel.app/?p=" + encodeURIComponent(productId);
 
       const adminText =
-        "🛒 НОВЫЙ ЗАКАЗ\n\n" +
-        "Букет: " + name + "\n" +
-        "Цена: " + price + "\n" +
-        (desc ? "\nОписание:\n" + desc + "\n" : "") +
-        (img ? "\nФото: " + img + "\n" : "") +
-        (link ? "\nСсылка: " + link + "\n" : "") +
-        "\nКлиент chat_id: " + (chatId ? chatId : "неизвестно");
+        "🛒 НОВЫЙ ЗАКАЗ (deep link)\n\n" +
+        "Товар ID: " + productId + "\n" +
+        "Ссылка: " + link + "\n" +
+        "Клиент chat_id: " + (chatId ? chatId : "неизвестно");
 
       await sendMessage(token, adminChatId, adminText, link);
 
       if (chatId) {
         const clientText =
           "✅ Заказ принят! Мы скоро свяжемся с вами.\n\n" +
-          (link ? "Ссылка на букет: " + link : "");
+          "Ссылка на букет: " + link;
+
         await sendMessage(token, chatId, clientText, link);
       }
+
+      return res.status(200).json({ ok: true });
     }
+
+    // обычный /start без payload
+    if (chatId) {
+      await sendMessage(token, chatId, "Привет! Открой витрину через кнопку меню 🙂");
+    }
+    return res.status(200).json({ ok: true });
   }
 
+  // если пришло что-то другое — просто OK
   return res.status(200).json({ ok: true });
 };
 
