@@ -2,7 +2,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(200).send("ok");
 
   const token = process.env.BOT_TOKEN;
-  const adminChatId = String(process.env.ADMIN_CHAT_ID || "").trim(); // "41830773"
+  const adminChatId = String(process.env.ADMIN_CHAT_ID || "").trim(); // "1144072957"
 
   if (!token) return res.status(500).send("BOT_TOKEN missing");
   if (!adminChatId) return res.status(500).send("ADMIN_CHAT_ID missing");
